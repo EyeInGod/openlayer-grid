@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Grid Input Example</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v6.13.0/css/ol.css" type="text/css" />
+    <style>
+      .map {
+        height: 400px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <div>
+      <label for="topLeft">Top Left:</label>
+      <input type="text" id="topLeft" />
+    </div>
+    <div>
+      <label for="topRight">Top Right:</label>
+      <input type="text" id="topRight" />
+    </div>
+    <div>
+      <label for="bottomLeft">Bottom Left:</label>
+      <input type="text" id="bottomLeft" />
+    </div>
+    <div>
+      <label for="bottomRight">Bottom Right:</label>
+      <input type="text" id="bottomRight" />
+    </div>
+    <script src="https://openlayers.org/en/v6.13.0/build/ol.js"></script>
+    <script>
+      var vectorSource = new ol.source.Vector();
+      var vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+      });
+
+      var map = new ol.Map({
+        target: "map",
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM(),
+          }),
+          vectorLayer,
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0, 0]),
+          zoom: 2,
+        }),
+      });
+
+      function createGrid() {
+        var topLeft = ol.proj.fromLonLat(
+          JSON.parse(document.getElementById("topLeft").value)
+        );
+        // var inputJsonValue = '{"latitude": 37.7749, "longitude": -122.4194}';
+        // var topLeft = ol.proj.fromLonLat(JSON.parse(inputJsonValue));
+        var topRight = ol.proj.fromLonLat(
+          JSON.parse(document.getElementById("topRight").value)
+        );
+        var bottomLeft = ol.proj.fromLonLat(
+          JSON.parse(document.getElementById("bottomLeft").value)
+        );
+        var bottomRight = ol.proj.fromLonLat(
+          JSON.parse(document.getElementById("bottomRight").value)
+        );
+
+        var extent = ol.extent.boundingExtent([
+          topLeft,
+          topRight,
+          bottomLeft,
+          bottomRight,
+        ]);
+
+        var minX = extent[0];
+        var minY = extent[1];
+        var maxX = extent[2];
+        var maxY = extent[3];
+        var gridSize = 10000; // Adjust the grid size as needed
+
+        for (var x = minX; x < maxX; x += gridSize) {
+          for (var y = minY; y < maxY; y += gridSize) {
+            var gridPoint = ol.proj.transform([x, y], "EPSG:3857", "EPSG:4326");
+            var point = new ol.Feature({
+              geometry: new ol.geom.Point(gridPoint),
+            });
+            vectorSource.addFeature(point);
+          }
+        }
+      }
+
+      document.getElementById("topLeft").addEventListener("change", createGrid);
+      document.getElementById("topRight").addEventListener("change", createGrid);
+      document.getElementById("bottomLeft").addEventListener("change", createGrid);
+      document.getElementById("bottomRight").addEventListener("change", createGrid);
+    </script>
+  </body>
+</html>
